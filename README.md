@@ -1,8 +1,8 @@
-# 🏨 Hotel Reservation Application
+# Hotel Reservation Application
 
 A Java console-based hotel reservation system built as part of the Udacity Java Programming Nanodegree.
 
-## 📋 Description
+## Description
 
 This application allows customers to browse available rooms, make reservations, and manage their bookings through a command-line interface. Admins can manage rooms, view all customers, and display all reservations.
 
