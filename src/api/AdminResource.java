@@ -27,6 +27,11 @@ public class AdminResource {
         return customerService.getCustomer(email);
     }
 
+
+    public IRoom getRoom(String roomNumber) {
+        return reservationService.getARoom(roomNumber);
+    }
+
     public void addRoom(List<IRoom> rooms) {
         for (IRoom room : rooms) {
             reservationService.addRoom(room);
@@ -34,7 +39,6 @@ public class AdminResource {
     }
 
     public Collection<IRoom> getAllRooms() {
-        // You'll need to add getAllRooms() to ReservationService
         return reservationService.getAllRooms();
     }
 

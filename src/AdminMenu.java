@@ -70,26 +70,68 @@ public class AdminMenu {
         boolean addMore = true;
 
         while (addMore) {
-            System.out.print("Enter room number: ");
-            String roomNumber = scanner.nextLine().trim();
 
-            System.out.print("Enter room price (0 for free): ");
-            double price = Double.parseDouble(scanner.nextLine().trim());
+            String roomNumber;
+            while (true) {
+                System.out.print("Enter room number: ");
+                roomNumber = scanner.nextLine().trim();
+                if (roomNumber.isEmpty()) {
+                    System.out.println("Room number cannot be empty. Please try again.");
+                } else if (adminResource.getRoom(roomNumber) != null) {
+                    System.out.println("Room " + roomNumber + " already exists. Please enter a different number.");
+                } else {
+                    break;
+                }
+            }
 
-            System.out.print("Enter room type (1 = Single, 2 = Double): ");
-            String typeInput = scanner.nextLine().trim();
-            RoomType roomType = typeInput.equals("1") ? RoomType.SINGLE : RoomType.DOUBLE;
+
+            double price;
+            while (true) {
+                try {
+                    System.out.print("Enter room price (0 for free): ");
+                    String priceInput = scanner.nextLine().trim();
+                    if (priceInput.isEmpty() || priceInput.equalsIgnoreCase("null")) {
+                        System.out.println("Price cannot be empty or null. Please enter a valid number.");
+                        continue;
+                    }
+                    price = Double.parseDouble(priceInput);
+                    if (price < 0) {
+                        System.out.println("Price cannot be negative. Please enter 0 or a positive number.");
+                        continue;
+                    }
+                    break;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid price. Please enter a numeric value (e.g., 99.99).");
+                }
+            }
+
+
+            RoomType roomType;
+            while (true) {
+                System.out.print("Enter room type (1 = Single, 2 = Double): ");
+                String typeInput = scanner.nextLine().trim();
+                if (typeInput.equals("1")) {
+                    roomType = RoomType.SINGLE;
+                    break;
+                } else if (typeInput.equals("2")) {
+                    roomType = RoomType.DOUBLE;
+                    break;
+                } else {
+                    System.out.println("Invalid room type. Please enter 1 for Single or 2 for Double.");
+                }
+            }
 
             IRoom room = (price == 0)
                     ? new FreeRoom(roomNumber, roomType)
                     : new Room(roomNumber, price, roomType);
             newRooms.add(room);
+            System.out.println("Room added: " + room);
 
             System.out.print("Add another room? (yes/no): ");
             addMore = scanner.nextLine().trim().equalsIgnoreCase("yes");
         }
 
         adminResource.addRoom(newRooms);
-        System.out.println("Rooms added successfully!");
+        System.out.println("All rooms saved successfully!");
     }
 }

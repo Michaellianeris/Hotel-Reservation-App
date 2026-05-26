@@ -3,15 +3,19 @@ package service;
 import model.Customer;
 import model.IRoom;
 import model.Reservation;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ReservationService {
 
     private static ReservationService instance;
-    private final Collection<IRoom> rooms = new ArrayList<>();
-    private final Collection<Reservation> reservations = new ArrayList<>();
+    private final Map<String, IRoom> rooms = new HashMap<>(); // prevents duplicate room numbers
+    private final List<Reservation> reservations = new ArrayList<>();
 
     private ReservationService() {}
 
@@ -23,49 +27,51 @@ public class ReservationService {
     }
 
     public void addRoom(IRoom room) {
-        rooms.add(room);
+        if (rooms.containsKey(room.getRoomNumber())) {
+            System.out.println("Room " + room.getRoomNumber() + " already exists. Skipping.");
+            return;
+        }
+        rooms.put(room.getRoomNumber(), room);
     }
 
     public IRoom getARoom(String roomId) {
-        for (IRoom room : rooms) {
-            if (room.getRoomNumber().equals(roomId)) {
-                return room;
-            }
-        }
-        return null;
+        return rooms.get(roomId);
+    }
+
+    public Collection<IRoom> getAllRooms() {
+        return rooms.values();
     }
 
     public Reservation reserveARoom(Customer customer, IRoom room,
                                     Date checkInDate, Date checkOutDate) {
+        // Prevent double-booking
+        for (Reservation res : reservations) {
+            if (res.getRoom().getRoomNumber().equals(room.getRoomNumber())) {
+                if (res.getCheckInDate().before(checkOutDate) &&
+                        res.getCheckOutDate().after(checkInDate)) {
+                    throw new IllegalArgumentException(
+                            "Room " + room.getRoomNumber() + " is already booked for these dates.");
+                }
+            }
+        }
         Reservation reservation = new Reservation(customer, room, checkInDate, checkOutDate);
         reservations.add(reservation);
         return reservation;
     }
 
     public Collection<IRoom> findRooms(Date checkInDate, Date checkOutDate) {
-        Collection<IRoom> availableRooms = new ArrayList<>();
-        for (IRoom room : rooms) {
-            if (isRoomAvailable(room, checkInDate, checkOutDate)) {
-                availableRooms.add(room);
+        List<IRoom> availableRooms = new ArrayList<>(rooms.values());
+        for (Reservation res : reservations) {
+            if (res.getCheckInDate().before(checkOutDate) &&
+                    res.getCheckOutDate().after(checkInDate)) {
+                availableRooms.remove(res.getRoom());
             }
         }
         return availableRooms;
     }
 
-    private boolean isRoomAvailable(IRoom room, Date checkIn, Date checkOut) {
-        for (Reservation res : reservations) {
-            if (res.getRoom().getRoomNumber().equals(room.getRoomNumber())) {
-                // Overlap check: new dates overlap if not (checkOut <= existing checkIn OR checkIn >= existing checkOut)
-                if (!(checkOut.before(res.getCheckInDate()) || checkIn.after(res.getCheckOutDate()))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     public Collection<Reservation> getCustomersReservation(Customer customer) {
-        Collection<Reservation> customerReservations = new ArrayList<>();
+        List<Reservation> customerReservations = new ArrayList<>();
         for (Reservation res : reservations) {
             if (res.getCustomer().equals(customer)) {
                 customerReservations.add(res);
@@ -74,13 +80,11 @@ public class ReservationService {
         return customerReservations;
     }
 
-    public Collection<IRoom> getAllRooms() {
-        return rooms;
-    }
-
     public void printAllReservation() {
-        for (Reservation res : reservations) {
-            System.out.println(res);
+        if (reservations.isEmpty()) {
+            System.out.println("No reservations found.");
+        } else {
+            reservations.forEach(System.out::println);
         }
     }
 }
