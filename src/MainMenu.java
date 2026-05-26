@@ -16,7 +16,7 @@ public class MainMenu {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 
     static {
-        dateFormat.setLenient(false); // Rejects invalid dates like 20/01/2027
+        dateFormat.setLenient(false);
     }
 
     public static void main(String[] args) {
@@ -78,11 +78,13 @@ public class MainMenu {
         }
 
         Collection<IRoom> availableRooms = hotelResource.findARoom(checkIn, checkOut);
+        Date bookingCheckIn = checkIn;
+        Date bookingCheckOut = checkOut;
 
         if (availableRooms.isEmpty()) {
             System.out.println("No rooms available for those dates.");
 
-
+            // +7 days recommendation
             Calendar cal = Calendar.getInstance();
             cal.setTime(checkIn);
             cal.add(Calendar.DAY_OF_MONTH, 7);
@@ -96,17 +98,23 @@ public class MainMenu {
 
             if (recommendedRooms.isEmpty()) {
                 System.out.println("No rooms available for alternate dates either.");
-            } else {
-                System.out.println("\nWe recommend the following rooms for alternate dates:");
-                System.out.println("Check-in: " + dateFormat.format(newCheckIn));
-                System.out.println("Check-out: " + dateFormat.format(newCheckOut));
-                recommendedRooms.forEach(System.out::println);
+                return;
             }
-            return;
-        }
 
-        System.out.println("Available rooms:");
-        availableRooms.forEach(System.out::println);
+            System.out.println("\nWe recommend the following rooms for alternate dates:");
+            System.out.println("Check-in: " + dateFormat.format(newCheckIn));
+            System.out.println("Check-out: " + dateFormat.format(newCheckOut));
+            recommendedRooms.forEach(System.out::println);
+
+            // Use new dates for booking
+            availableRooms = recommendedRooms;
+            bookingCheckIn = newCheckIn;
+            bookingCheckOut = newCheckOut;
+
+        } else {
+            System.out.println("Available rooms:");
+            availableRooms.forEach(System.out::println);
+        }
 
         System.out.print("Would you like to book a room? (yes/no): ");
         if (!scanner.nextLine().trim().equalsIgnoreCase("yes")) return;
@@ -129,7 +137,7 @@ public class MainMenu {
         }
 
         try {
-            Reservation reservation = hotelResource.bookARoom(email, room, checkIn, checkOut);
+            Reservation reservation = hotelResource.bookARoom(email, room, bookingCheckIn, bookingCheckOut);
             System.out.println("Reservation created: " + reservation);
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
